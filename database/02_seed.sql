@@ -42,6 +42,12 @@ INSERT INTO contratacoes (usuario_id, servico_id, status) VALUES
   (4, 3, 'contatado'),     -- id 3
   (5, 3, 'nao_atendido');  -- id 4
 
+-- Confirmações fictícias das duas contratações avaliadas no seed.
+UPDATE contratacoes
+SET conclusao_confirmada_cliente_em = data,
+    conclusao_confirmada_prestador_em = data
+WHERE id IN (1, 2);
+
 INSERT INTO avaliacoes (contratacao_id, nota, comentario) VALUES
   (1, 5, 'Serviço rápido e bem feito.'),
   (2, 4, 'Bom, só atrasou um pouco.');
