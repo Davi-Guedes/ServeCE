@@ -83,6 +83,8 @@ CREATE TABLE contratacoes (
   servico_id INT NOT NULL,
   data       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   status     ENUM('contatado','atendido','nao_atendido') NOT NULL DEFAULT 'contatado',
+  conclusao_confirmada_cliente_em   DATETIME NULL,
+  conclusao_confirmada_prestador_em DATETIME NULL,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
   FOREIGN KEY (servico_id) REFERENCES servicos(id)
 );
@@ -101,3 +103,23 @@ CREATE TABLE avaliacoes (
 -- Índices extras para busca (as FKs já criam índice automaticamente)
 CREATE INDEX idx_servicos_status_cidade ON servicos (status, cidade);
 CREATE INDEX idx_contratacoes_usuario_status ON contratacoes (usuario_id, status);
+
+DELIMITER $$
+
+CREATE TRIGGER trg_avaliacoes_exigir_confirmacoes
+BEFORE INSERT ON avaliacoes
+FOR EACH ROW
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM contratacoes
+        WHERE id = NEW.contratacao_id
+          AND conclusao_confirmada_cliente_em IS NOT NULL
+          AND conclusao_confirmada_prestador_em IS NOT NULL
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'A avaliação exige a confirmação de conclusão das duas partes.';
+    END IF;
+END$$
+
+DELIMITER ;
